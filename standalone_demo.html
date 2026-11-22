@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ NovaStore — Premium E-Commerce Experience</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', 'Kantumruy Pro', sans-serif;
+      background-color: #f8fafc;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
+    }
+  </style>
+</head>
+<body class="text-slate-900 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const PRODUCTS_DATA = [
+      {
+        id: 1,
+        name: 'Laptop Ultra Pro',
+        category: 'Workstation',
+        price: 650.0,
+        rating: '4.9',
+        badge: 'Best Seller',
+        image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=700&auto=format&fit=crop&q=80',
+        description: 'កុំព្យូទ័រយួរដៃអេក្រង់ច្បាស់ត្រជាក់ភ្នែក កម្លាំងខ្លាំង សម្រាប់ Design និង Code',
+      },
+      {
+        id: 2,
+        name: 'Ergonomic Optical Mouse',
+        category: 'Peripherals',
+        price: 15.0,
+        rating: '4.8',
+        badge: 'Popular',
+        image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=700&auto=format&fit=crop&q=80',
+        description: 'Mouse ឥតខ្សែ ស្ទីល Ergonomic កាន់ស្រួលដៃ មិនស្ពឹក និងដំណើរការរលូន',
+      },
+      {
+        id: 3,
+        name: 'Mechanical RGB Keyboard',
+        category: 'Peripherals',
+        price: 25.0,
+        rating: '4.9',
+        badge: 'Trending',
+        image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=700&auto=format&fit=crop&q=80',
+        description: 'ក្តារចុច Mechanical វាយស្រួលដៃ មានភ្លើង RGB ស្រស់ស្អាត ធន់ប្រើបានយូរឆ្នាំ',
+      },
+      {
+        id: 4,
+        name: 'Ultra-Slim 24" 4K Monitor',
+        category: 'Displays',
+        price: 120.0,
+        rating: '5.0',
+        badge: 'Featured',
+        image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=700&auto=format&fit=crop&q=80',
+        description: 'អេក្រង់កម្រិត 4K IPS គែមស្ដើង បង្ហាញពណ៌ដិតច្បាស់ 100% sRGB មិនចាំងភ្នែក',
+      },
+    ];
+
+    function App() {
+      const [currentPage, setCurrentPage] = useState('products');
+      const [cart, setCart] = useState([
+        { id: 1, name: 'Laptop Ultra Pro', price: 650.0, image: PRODUCTS_DATA[0].image, quantity: 1 },
+        { id: 2, name: 'Ergonomic Optical Mouse', price: 15.0, image: PRODUCTS_DATA[1].image, quantity: 2 },
+      ]);
+      const [toast, setToast] = useState(null);
+      const [customer, setCustomer] = useState({
+        firstName: 'Divyansh',
+        lastName: 'Agarwal',
+        email: 'divyansh@webyansh.com',
+        phone: '+91 6377588843',
+        address: 'Street 210, Sensok, Phnom Penh',
+        shippingMethod: 'free',
+      });
+      const [formErrors, setFormErrors] = useState({});
+      const [confirmedOrder, setConfirmedOrder] = useState(null);
+      const [orderCounter, setOrderCounter] = useState(1);
+
+      const showToast = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 2500);
+      };
+
+      const addToCart = (product) => {
+        setCart(prev => {
+          const item = prev.find(p => p.id === product.id);
+          if (item) {
+            return prev.map(p => p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p);
+          }
+          return [...prev, { ...product, quantity: 1 }];
+        });
+        showToast(`✨ បានបន្ថែម ${product.name} ទៅកន្ត្រក!`);
+      };
+
+      const updateQuantity = (id, newQty) => {
+        if (newQty <= 0) {
+          removeProduct(id);
+          return;
+        }
+        setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: newQty } : item));
+      };
+
+      const removeProduct = (id) => {
+        setCart(prev => prev.filter(item => item.id !== id));
+        showToast('🗑️ បានលុបទំនិញចេញពីកន្ត្រក!');
+      };
+
+      const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const shippingFee = customer.shippingMethod === 'express' ? 9.0 : 0.0;
+      const grandTotal = subtotal + shippingFee;
+      const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      const formatPrice = (val) => '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setCustomer(prev => ({ ...prev, [name]: value }));
+        if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
+      };
+
+      const validateForm = () => {
+        const errors = {};
+        if (!customer.firstName.trim()) errors.firstName = 'សូមបញ្ចូលនាមខ្លួន!';
+        if (!customer.lastName.trim()) errors.lastName = 'សូមបញ្ចូលនាមត្រកូល!';
+        if (!customer.email.trim()) errors.email = 'សូមបញ្ចូល Email!';
+        else if (!/\S+@\S+\.\S+/.test(customer.email)) errors.email = 'ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវ!';
+        if (!customer.phone.trim()) errors.phone = 'សូមបញ្ចូលលេខទូរស័ព្ទ!';
+        if (!customer.address.trim()) errors.address = 'សូមបញ្ចូលអាសយដ្ឋាន!';
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+      };
+
+      const handlePlaceOrder = (e) => {
+        e.preventDefault();
+        if (cart.length === 0) {
+          alert('Cart is empty!');
+          return;
+        }
+        if (!validateForm()) return;
+
+        const orderId = `ORD-${String(orderCounter).padStart(4, '0')}`;
+        const newOrder = {
+          orderId,
+          customerName: `${customer.firstName} ${customer.lastName}`,
+          customerEmail: customer.email,
+          customerPhone: customer.phone,
+          customerAddress: customer.address,
+          shippingMethodName: customer.shippingMethod === 'express' ? 'Express Delivery ($9.00)' : 'Standard Free Delivery ($0.00)',
+          orderDate: new Date().toLocaleString(),
+          products: [...cart],
+          subtotal,
+          shippingFee,
+          totalAmount: grandTotal,
+          orderStatus: 'Pending',
+        };
+
+        setConfirmedOrder(newOrder);
+        setOrderCounter(prev => prev + 1);
+        setCart([]);
+        setCurrentPage('confirmation');
+      };
+
+      return (
+        <div class="min-h-screen flex flex-col">
+          {/* Toast */}
+          {toast && (
+            <div class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl z-50 flex items-center gap-2 border border-slate-700 text-sm font-semibold animate-bounce">
+              {toast}
+            </div>
+          )}
+
+          {/* Glass Navbar */}
+          <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
+            <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+              <div class="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentPage('products')}>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/25">
+                  ⚡
+                </div>
+                <div>
+                  <span class="font-extrabold text-xl tracking-tight text-slate-900">NovaStore</span>
+                  <span class="text-[10px] ml-2 font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full uppercase">Premium</span>
+                </div>
+              </div>
+
+              {/* Progress Steps */}
+              <div class="hidden md:flex items-center gap-2 bg-slate-100 p-1.5 rounded-full border border-slate-200 text-xs font-bold">
+                <span onClick={() => setCurrentPage('cart')} class={`cursor-pointer px-3 py-1 rounded-full ${currentPage === 'products' || currentPage === 'cart' ? 'bg-white shadow text-slate-900' : 'text-slate-400'}`}>1. Cart</span>
+                <span class="text-slate-300">›</span>
+                <span onClick={() => cart.length > 0 && setCurrentPage('checkout')} class={`cursor-pointer px-3 py-1 rounded-full ${currentPage === 'checkout' ? 'bg-white shadow text-slate-900' : 'text-slate-400'}`}>2. Checkout</span>
+                <span class="text-slate-300">›</span>
+                <span class={`px-3 py-1 rounded-full ${currentPage === 'confirmation' ? 'bg-emerald-500 text-white shadow' : 'text-slate-400'}`}>3. Confirmation</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                {currentPage !== 'products' && (
+                  <button onClick={() => setCurrentPage('products')} class="text-xs font-bold px-3 py-2 text-slate-600 hover:text-slate-900">
+                    Products
+                  </button>
+                )}
+                <button onClick={() => setCurrentPage('cart')} class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-full flex items-center gap-2 shadow-lg shadow-slate-900/10">
+                  <span>🛒 Cart</span>
+                  <span class="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full">{totalItemsCount}</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Body */}
+          <main class="max-w-6xl mx-auto px-4 py-10 flex-1 w-full">
+            {/* 1. PRODUCTS */}
+            {currentPage === 'products' && (
+              <div>
+                <div class="text-center max-w-xl mx-auto mb-12">
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">Practical Exercise 1</span>
+                  <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">Explore High-End <span class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Tech Gear</span></h1>
+                  <p class="text-slate-500 text-sm mt-2">ជ្រើសរើសផលិតផលកំពូលទាំង ៤ មុខ ស្របតាមលំហាត់អនុវត្ត (Add to Cart, Update QTY, Total)</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {PRODUCTS_DATA.map(p => {
+                    const inCart = cart.find(i => i.id === p.id);
+                    return (
+                      <div key={p.id} class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition duration-300 flex flex-col justify-between group">
+                        <div class="h-48 bg-slate-100 overflow-hidden relative">
+                          <span class="absolute top-3 left-3 bg-white/90 backdrop-blur text-[10px] font-extrabold px-2.5 py-1 rounded-md text-slate-700 shadow-sm uppercase">{p.badge}</span>
+                          <img src={p.image} alt={p.name} class="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div class="flex items-center gap-1 text-xs mb-1 text-amber-500 font-bold">★ {p.rating}</div>
+                            <h3 class="font-extrabold text-slate-900 text-base">{p.name}</h3>
+                            <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{p.description}</p>
+                          </div>
+                          <div class="flex items-center justify-between pt-4 border-t border-slate-100 mt-4">
+                            <div>
+                              <span class="text-[10px] text-slate-400 block font-bold">PRICE</span>
+                              <span class="text-xl font-extrabold text-slate-900">{formatPrice(p.price)}</span>
+                            </div>
+                            <button onClick={() => addToCart(p)} class="bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-md transition">
+                              + Add {inCart && `(${inCart.quantity})`}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {cart.length > 0 && (
+                  <div class="mt-12 text-center">
+                    <button onClick={() => setCurrentPage('cart')} class="bg-gradient-to-r from-slate-900 to-indigo-950 hover:from-indigo-600 hover:to-purple-600 text-white font-extrabold text-sm px-8 py-3.5 rounded-full shadow-xl transition transform hover:-translate-y-0.5">
+                      Go to Shopping Cart ({totalItemsCount} items • {formatPrice(subtotal)}) →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. CART */}
+            {currentPage === 'cart' && (
+              <div>
+                <div class="mb-6">
+                  <h1 class="text-2xl font-extrabold text-slate-900">Practical Exercise 1 – Shopping Cart</h1>
+                  <p class="text-slate-500 text-sm">Update QTY (+/-), Remove Product, Subtotal & Grand Total</p>
+                </div>
+
+                {cart.length === 0 ? (
+                  <div class="bg-white border border-slate-200 rounded-3xl p-16 text-center shadow-sm">
+                    <p class="text-5xl mb-4">🛒</p>
+                    <h3 class="text-xl font-extrabold text-slate-900">Your cart is completely empty</h3>
+                    <button onClick={() => setCurrentPage('products')} class="mt-5 bg-slate-900 text-white px-6 py-3 rounded-full text-xs font-bold">
+                      Explore Products
+                    </button>
+                  </div>
+                ) : (
+                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                      <h2 class="text-lg font-extrabold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex justify-between">
+                        <span>Cart Items</span>
+                        <span class="text-xs text-slate-400 font-bold">{totalItemsCount} products</span>
+                      </h2>
+                      <div class="divide-y divide-slate-100">
+                        {cart.map(item => (
+                          <div key={item.id} class="py-4 flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                              <img src={item.image} alt={item.name} class="w-16 h-16 object-cover rounded-xl border border-slate-200" />
+                              <div>
+                                <h4 class="font-extrabold text-slate-900 text-sm">{item.name}</h4>
+                                <span class="text-xs text-slate-500">{formatPrice(item.price)} each</span>
+                              </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-full p-1">
+                              <button onClick={() => updateQuantity(item.id, item.quantity - 1)} class="w-6 h-6 rounded-full bg-white text-slate-700 hover:bg-slate-900 hover:text-white font-extrabold text-xs shadow-sm flex items-center justify-center">−</button>
+                              <span class="w-7 text-center font-extrabold text-xs">{item.quantity}</span>
+                              <button onClick={() => updateQuantity(item.id, item.quantity + 1)} class="w-6 h-6 rounded-full bg-white text-slate-700 hover:bg-slate-900 hover:text-white font-extrabold text-xs shadow-sm flex items-center justify-center">+</button>
+                            </div>
+                            <div class="font-extrabold text-slate-900 text-right min-w-[80px]">
+                              {formatPrice(item.price * item.quantity)}
+                            </div>
+                            <button onClick={() => removeProduct(item.id)} class="text-slate-300 hover:text-red-500 p-2 text-lg">
+                              🗑️
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm h-fit sticky top-24">
+                      <h3 class="text-lg font-extrabold text-slate-900 mb-4 border-b pb-2">Order Summary</h3>
+                      <div class="space-y-3 text-sm text-slate-600 mb-4">
+                        <div class="flex justify-between">
+                          <span>Subtotal</span>
+                          <span class="font-bold text-slate-900">{formatPrice(subtotal)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span>Estimated Shipping</span>
+                          <span class="text-slate-400">{shippingFee === 0 ? 'Free ($0.00)' : formatPrice(shippingFee)}</span>
+                        </div>
+                        <div class="flex justify-between border-t border-dashed pt-3 text-lg font-extrabold text-slate-900">
+                          <span>Grand Total</span>
+                          <span class="text-indigo-600">{formatPrice(grandTotal)}</span>
+                        </div>
+                      </div>
+                      <button onClick={() => setCurrentPage('checkout')} class="w-full bg-slate-900 hover:bg-indigo-600 text-white font-extrabold py-3.5 rounded-2xl text-sm shadow-xl transition">
+                        Proceed to Checkout →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. CHECKOUT */}
+            {currentPage === 'checkout' && (
+              <div>
+                <div class="mb-6">
+                  <h1 class="text-2xl font-extrabold text-slate-900">Practical Exercise 2 – Checkout</h1>
+                  <p class="text-slate-500 text-sm">Customer Info Validation, Shopping Method & Order Summary</p>
+                </div>
+
+                <form onSubmit={handlePlaceOrder} class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                      <h2 class="text-base font-extrabold text-slate-900 mb-4">👤 Customer Details</h2>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-600">
+                        <div>
+                          <label class="block mb-1">First Name *</label>
+                          <input type="text" name="firstName" value={customer.firstName} onChange={handleInputChange} class={`w-full border rounded-xl p-3 text-sm outline-none font-normal ${formErrors.firstName ? 'border-red-500 bg-red-50' : 'border-slate-200 focus:border-indigo-600'}`} />
+                          {formErrors.firstName && <p class="text-red-500 text-[11px] mt-1">{formErrors.firstName}</p>}
+                        </div>
+                        <div>
+                          <label class="block mb-1">Last Name *</label>
+                          <input type="text" name="lastName" value={customer.lastName} onChange={handleInputChange} class={`w-full border rounded-xl p-3 text-sm outline-none font-normal ${formErrors.lastName ? 'border-red-500 bg-red-50' : 'border-slate-200 focus:border-indigo-600'}`} />
+                          {formErrors.lastName && <p class="text-red-500 text-[11px] mt-1">{formErrors.lastName}</p>}
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label class="block mb-1">Email Address *</label>
+                          <input type="email" name="email" value={customer.email} onChange={handleInputChange} class={`w-full border rounded-xl p-3 text-sm outline-none font-normal ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-slate-200 focus:border-indigo-600'}`} />
+                          {formErrors.email && <p class="text-red-500 text-[11px] mt-1">{formErrors.email}</p>}
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label class="block mb-1">Phone Number *</label>
+                          <input type="tel" name="phone" value={customer.phone} onChange={handleInputChange} class={`w-full border rounded-xl p-3 text-sm outline-none font-normal ${formErrors.phone ? 'border-red-500 bg-red-50' : 'border-slate-200 focus:border-indigo-600'}`} />
+                          {formErrors.phone && <p class="text-red-500 text-[11px] mt-1">{formErrors.phone}</p>}
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label class="block mb-1">Shipping Address *</label>
+                          <input type="text" name="address" value={customer.address} onChange={handleInputChange} class={`w-full border rounded-xl p-3 text-sm outline-none font-normal ${formErrors.address ? 'border-red-500 bg-red-50' : 'border-slate-200 focus:border-indigo-600'}`} />
+                          {formErrors.address && <p class="text-red-500 text-[11px] mt-1">{formErrors.address}</p>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                      <h2 class="text-base font-extrabold text-slate-900 mb-4">🚚 Shopping Method</h2>
+                      <div class="space-y-3">
+                        <label class={`flex items-center justify-between p-4 border rounded-2xl cursor-pointer ${customer.shippingMethod === 'free' ? 'border-indigo-600 bg-indigo-50/40' : 'border-slate-200'}`}>
+                          <div class="flex items-center gap-3">
+                            <input type="radio" name="shipping" checked={customer.shippingMethod === 'free'} onChange={() => setCustomer(prev => ({ ...prev, shippingMethod: 'free' }))} class="accent-indigo-600" />
+                            <div>
+                              <div class="font-extrabold text-sm">Free Shipping</div>
+                              <div class="text-xs text-slate-500">7-20 Days Delivery</div>
+                            </div>
+                          </div>
+                          <span class="font-extrabold text-sm">$0.00</span>
+                        </label>
+                        <label class={`flex items-center justify-between p-4 border rounded-2xl cursor-pointer ${customer.shippingMethod === 'express' ? 'border-indigo-600 bg-indigo-50/40' : 'border-slate-200'}`}>
+                          <div class="flex items-center gap-3">
+                            <input type="radio" name="shipping" checked={customer.shippingMethod === 'express'} onChange={() => setCustomer(prev => ({ ...prev, shippingMethod: 'express' }))} class="accent-indigo-600" />
+                            <div>
+                              <div class="font-extrabold text-sm">Express Priority Delivery ⚡</div>
+                              <div class="text-xs text-slate-500">1-3 Days Delivery</div>
+                            </div>
+                          </div>
+                          <span class="font-extrabold text-sm">$9.00</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm h-fit">
+                    <h3 class="text-lg font-extrabold text-slate-900 mb-4 border-b pb-2">Order Summary</h3>
+                    <div class="space-y-3 mb-4">
+                      {cart.map(item => (
+                        <div key={item.id} class="flex items-center justify-between text-xs">
+                          <span>{item.name} × {item.quantity}</span>
+                          <span class="font-extrabold text-slate-900">{formatPrice(item.price * item.quantity)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div class="border-t pt-3 space-y-2 text-sm text-slate-600">
+                      <div class="flex justify-between">
+                        <span>Subtotal</span>
+                        <span class="font-bold text-slate-900">{formatPrice(subtotal)}</span>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Shipping</span>
+                        <span class="font-bold text-slate-900">{formatPrice(shippingFee)}</span>
+                      </div>
+                      <div class="flex justify-between border-t border-dashed pt-3 text-lg font-extrabold text-slate-900">
+                        <span>Grand Total</span>
+                        <span class="text-indigo-600">{formatPrice(grandTotal)}</span>
+                      </div>
+                    </div>
+                    <button type="submit" class="w-full mt-6 bg-slate-900 hover:bg-indigo-600 text-white font-extrabold py-3.5 rounded-2xl text-sm shadow-xl transition">
+                      Place Order ({formatPrice(grandTotal)})
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* 4. CONFIRMATION */}
+            {currentPage === 'confirmation' && confirmedOrder && (
+              <div class="max-w-xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
+                <div class="h-2 w-full bg-gradient-to-r from-emerald-500 to-indigo-600 absolute top-0 left-0"></div>
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 font-bold shadow-lg shadow-emerald-500/20">
+                  ✓
+                </div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Order Placed Successfully!</h2>
+                <p class="text-sm text-slate-500 mt-1 mb-6">ការបញ្ជាទិញរបស់អ្នកត្រូវបានទទួល និងកត់ត្រាទុកដោយជោគជ័យ</p>
+
+                <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 text-left grid grid-cols-2 gap-3 text-xs mb-6">
+                  <div>
+                    <span class="text-slate-400 block uppercase font-bold text-[10px]">Order ID</span>
+                    <strong class="text-indigo-600 font-mono text-base">{confirmedOrder.orderId}</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block uppercase font-bold text-[10px]">Order Status</span>
+                    <span class="inline-block bg-amber-100 text-amber-800 text-[11px] px-2.5 py-0.5 rounded-full font-extrabold">
+                      ⏳ {confirmedOrder.orderStatus}
+                    </span>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block uppercase font-bold text-[10px]">Customer Name</span>
+                    <strong class="text-slate-800 text-sm">{confirmedOrder.customerName}</strong>
+                  </div>
+                  <div>
+                    <span class="text-slate-400 block uppercase font-bold text-[10px]">Order Date</span>
+                    <span class="text-slate-700 font-semibold">{confirmedOrder.orderDate}</span>
+                  </div>
+                  <div class="col-span-2 border-t pt-2 mt-1">
+                    <span class="text-slate-400 block uppercase font-bold text-[10px]">Address & Delivery</span>
+                    <span class="text-slate-800">{confirmedOrder.customerAddress} ({confirmedOrder.shippingMethodName})</span>
+                  </div>
+                </div>
+
+                <div class="text-left border-t pt-4 mb-6">
+                  <h4 class="font-extrabold text-sm text-slate-900 mb-3">Ordered Products:</h4>
+                  <div class="space-y-2">
+                    {confirmedOrder.products.map(item => (
+                      <div key={item.id} class="flex justify-between text-xs py-2 border-b border-dashed border-slate-100">
+                        <span>{item.name} × {item.quantity}</span>
+                        <span class="font-bold">{formatPrice(item.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div class="flex justify-between text-base font-black text-slate-900 mt-4 pt-3 border-t">
+                    <span>Total Amount</span>
+                    <span class="text-emerald-600 text-xl">{formatPrice(confirmedOrder.totalAmount)}</span>
+                  </div>
+                </div>
+
+                <button onClick={() => setCurrentPage('products')} class="bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-8 py-3 rounded-full text-xs shadow-lg transition">
+                  🛍️ Continue Shopping / New Order
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
