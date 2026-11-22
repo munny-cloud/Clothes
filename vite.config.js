@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // កំណត់ base សម្រាប់ GitHub Pages (Repository: Technova)
-  // ការប្រើ './' ធានាថា assets ដើរទាំងនៅលើ GitHub Pages និង Local
-  base: process.env.GITHUB_PAGES ? '/Technova/' : './',
+  // GitHub Pages Base URL សម្រាប់ repo: NovaStore
+  base: process.env.NODE_ENV === 'production' ? '/NovaStore/' : './',
 })
